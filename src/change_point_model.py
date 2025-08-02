@@ -44,3 +44,5 @@ def run_bayesian_change_point_model(data: pd.Series, draws=1000, tune=1000, seed
         trace = pm.sample(draws=draws, tune=tune, random_seed=seed, return_inferencedata=True)
 
     return model, trace
+
+
