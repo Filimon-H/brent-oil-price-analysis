@@ -40,3 +40,6 @@ export const fetchPriceTrend = (start = "", end = "", includeEvents = false) => 
 
 // 📈 Volatility API call (used in VolatilityChart.jsx)
 export const fetchVolatility = () => api.get("/events/volatility");
+
+// 🔄 API for average price change around events
+export const fetchEventImpacts = () => api.get("/events/price_change_impact");

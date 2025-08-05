@@ -139,3 +139,44 @@ def price_trend():
                 })
 
     return jsonify(response)
+
+
+
+@changepoint_bp.route("/events/price_change_impact")
+def price_change_impact():
+    window = 7  # days before and after
+    price_df = pd.read_csv(os.path.join(BASE_DIR, "data", "BrentOilPrices.csv"))
+    price_df["Date"] = pd.to_datetime(price_df["Date"])
+    price_df.set_index("Date", inplace=True)
+
+    events_df = pd.read_csv(os.path.join(BASE_DIR, "data", "key_events.csv"))
+    events_df["start"] = pd.to_datetime(events_df["start"])
+
+    results = []
+
+    for _, row in events_df.iterrows():
+        event_date = row["start"]
+        name = row["event"]
+        category = row.get("category", "")
+
+        try:
+            before = price_df.loc[event_date - pd.Timedelta(days=window): event_date - pd.Timedelta(days=1)]
+            after = price_df.loc[event_date + pd.Timedelta(days=1): event_date + pd.Timedelta(days=window)]
+
+            avg_before = before["Price"].mean()
+            avg_after = after["Price"].mean()
+
+            if pd.notna(avg_before) and pd.notna(avg_after):
+                pct_change = round(((avg_after - avg_before) / avg_before) * 100, 2)
+                results.append({
+                    "event": name[:50],
+                    "date": event_date.strftime("%Y-%m-%d"),
+                    "category": category,
+                    "avg_before": round(avg_before, 2),
+                    "avg_after": round(avg_after, 2),
+                    "pct_change": pct_change
+                })
+        except:
+            continue
+
+    return jsonify(results)

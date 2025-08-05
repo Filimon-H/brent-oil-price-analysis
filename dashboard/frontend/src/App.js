@@ -3,6 +3,7 @@ import { fetchSummary } from "./api/client";
 import SummaryCard from "./components/SummaryCard";
 import HistoricalChart from "./components/HistoricalChart";
 import VolatilityChart from "./components/VolatilityChart";
+import EventImpactTable from "./components/EventImpactTable";
 
 function App() {
   const [summary, setSummary] = useState(null);
@@ -22,11 +23,14 @@ function App() {
       {/* Summary card */}
       {summary ? <SummaryCard summary={summary} /> : <p>Loading summary...</p>}
 
-      {/* Date-range-filterable historical price chart */}
+      {/* Historical price chart with filters and event toggle */}
       <HistoricalChart />
 
       {/* Volatility visualization */}
       <VolatilityChart />
+
+      {/* 📊 Average price change around events */}
+      <EventImpactTable />
     </div>
   );
 }
