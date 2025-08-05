@@ -10,3 +10,4 @@ export const fetchSummary = () => api.get("/summary");
 
 export const fetchPriceTrend = () => api.get("/events/price_trend");
 
+export const fetchVolatility = () => api.get("/events/volatility");

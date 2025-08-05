@@ -63,3 +63,18 @@ def price_trend():
         "dates": df['Date'].dt.strftime('%Y-%m-%d').tolist(),
         "prices": df['Price'].round(2).tolist()
     })
+
+
+@changepoint_bp.route("/events/volatility")
+def volatility():
+    df = pd.read_csv(os.path.join(BASE_DIR, "data", "BrentOilPrices.csv"))
+    df["Date"] = pd.to_datetime(df["Date"])
+    df["LogReturn"] = np.log(df["Price"] / df["Price"].shift(1))
+    df["Volatility"] = df["LogReturn"].rolling(window=30).std()
+
+    df = df.dropna()  # drop rows with NaNs from rolling std
+
+    return jsonify({
+        "dates": df["Date"].dt.strftime('%Y-%m-%d').tolist(),
+        "volatility": df["Volatility"].round(5).tolist()
+    })
