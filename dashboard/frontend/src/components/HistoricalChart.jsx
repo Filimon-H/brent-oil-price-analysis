@@ -1,35 +1,54 @@
-import React, { useEffect, useState } from 'react';
-import { Line } from 'react-chartjs-2';
-import axios from '../api/client';
+import React, { useEffect, useState } from "react";
+import { Line } from "react-chartjs-2";
+import { fetchPriceTrend } from "../api/client";
+import {
+  Chart as ChartJS,
+  LineElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  Tooltip,
+  Legend,
+} from "chart.js";
 
-function HistoricalChart() {
+ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
+
+const HistoricalChart = () => {
   const [chartData, setChartData] = useState(null);
 
   useEffect(() => {
-    axios.get('/api/events/price_trend')
-      .then(response => {
-        const { dates, prices } = response.data;
-        setChartData({
+    fetchPriceTrend()
+      .then((res) => {
+        const { dates, prices } = res.data;
+
+        const data = {
           labels: dates,
-          datasets: [{
-            label: 'Brent Oil Price',
-            data: prices,
-            fill: false,
-            borderColor: 'rgba(75,192,192,1)',
-            tension: 0.1
-          }]
-        });
+          datasets: [
+            {
+              label: "Brent Oil Price",
+              data: prices,
+              fill: false,
+              borderColor: "#007bff",
+              tension: 0.1,
+            },
+          ],
+        };
+
+        setChartData(data);
+      })
+      .catch((err) => {
+        console.error("Error fetching price trend:", err);
       });
   }, []);
 
-  if (!chartData) return <p>Loading chart...</p>;
+  if (!chartData) return <p>Loading price trend...</p>;
 
   return (
-    <div>
-      <h3>📈 Historical Brent Oil Price Trend</h3>
+    <div style={{ width: "95%", maxWidth: "1000px", margin: "30px auto" }}>
+      <h2 style={{ textAlign: "center" }}>📈 Brent Oil Historical Price Trend</h2>
       <Line data={chartData} />
     </div>
   );
-}
+};
 
 export default HistoricalChart;

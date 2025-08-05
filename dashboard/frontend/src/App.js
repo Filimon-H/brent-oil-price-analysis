@@ -1,6 +1,11 @@
+
+
+
+
 import React, { useEffect, useState } from "react";
 import { fetchSummary } from "./api/client";
 import SummaryCard from "./components/SummaryCard";
+import HistoricalChart from "./components/HistoricalChart"; // ✅ NEW
 
 function App() {
   const [summary, setSummary] = useState(null);
@@ -16,7 +21,10 @@ function App() {
       <h1 style={{ textAlign: "center", paddingTop: "20px" }}>
         🛢 Brent Oil Change Point Dashboard
       </h1>
-      {summary ? <SummaryCard summary={summary} /> : <p>Loading...</p>}
+      {summary ? <SummaryCard summary={summary} /> : <p>Loading summary...</p>}
+
+      {/* ✅ Render Historical Chart */}
+      <HistoricalChart />
     </div>
   );
 }
