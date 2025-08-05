@@ -4,111 +4,112 @@
 This project analyzes the historical fluctuations in Brent oil prices using **Bayesian Change Point Modeling** to identify significant shifts in market behavior. The goal is to align these shifts with **major geopolitical or economic events** and provide insight into the underlying structural changes.
 
 ---
-
-## 🚀 Project Overview
-
-**Challenge**: Week 10 - 10 Academy AI Mastery Program
-**Client**: Birhan Energies (Energy Sector Consultancy)
-**Date Range**: July 30 – August 5, 2025
-
-We use probabilistic modeling (via PyMC) to:
-
-* Detect when structural breaks occur in oil prices
-* Quantify the magnitude of change in return and volatility
-* Compare model-detected change points with historical real-world events
-
----
-
-## 📅 Data Sources
-
-### 1. **Brent Oil Price Dataset**
-
-* Source: Provided CSV (`BrentOilPrices.csv`)
-* Frequency: Daily
-* Range: May 20, 1987 – September 30, 2022
-* Columns: `Date`, `Price`
-
-### 2. **Key Global Events**
-
-* Source: Manually compiled
-* File: `key_events.csv`
-* Columns: `event`, `start`, `end`, `category`
-* Examples: Gulf War, COVID-19, OPEC cuts, financial crises
-
----
-
-## 🧱 Tools and Technologies
-
-* **Python 3.10+**
-* **PyMC** (v4+) for Bayesian modeling
-* **ArviZ** for posterior analysis
-* **Matplotlib/Seaborn** for visualization
-* **Pandas/Numpy** for data wrangling
----
-
-## 🔄 Project Structure
-
-```bash
 brent-oil-price-analysis/
-├── data/
-│   ├── BrentOilPrices.csv
-│   └── key_events.csv
-├── notebooks/
-│   ├── EDA.ipynb
-│   └── modeling.ipynb
-├── src/
-│   ├── data_loader.py
-│   ├── preprocessing.py
-│   ├── event_utils.py
-│   └── change_point_model.py
-├── README.md
-└── requirements.txt
-```
+│
+├── data/ # Raw and processed datasets
+├── dashboard/
+│ ├── app.py # Flask backend server
+│ ├── routes/ # API route logic (change point, trends, events)
+│ └── frontend/ # React frontend (UI components and charts)
+├── models/ # Bayesian model scripts & traces
+├── notebooks/ # EDA and PyMC modeling notebooks
+└── README.md # You are here
+
+yaml
+Copy
+Edit
 
 ---
 
-## 🥇 Key Features
+## 🚀 Features
 
-* **Bayesian Change Point Detection** using log returns
-* **Posterior inference** for tau (change date), mean, and volatility
-* **Visual alignment** of detected changepoint with real-world events
-* **Clear storytelling** in reports and future blog post
-* **Interactive Dashboard** (under development)
+### ✅ Task 1: Exploratory Data Analysis (EDA)
+- Summary statistics and trend inspection.
+- Price spikes and drops visually explored.
+- Missing data handling and transformation.
+
+### ✅ Task 2: Bayesian Change Point Detection
+- Used `PyMC` to model oil price returns.
+- Identified change points (e.g., 2008–2009 financial crisis).
+- Posterior distributions visualized with `arviz`.
+
+### ✅ Task 3: Interactive Dashboard (Flask + React)
+#### 📈 Key Functionalities:
+- **Historical Price Trends** with toggleable key event highlights.
+- **Date Range Filtering** to drill into specific time windows.
+- **Volatility Visualization** with moving standard deviation.
+- **Event Impact Table** showing avg. price change before/after events.
+- **Forecasting Toggle** using Linear Regression and Optional Bayesian Forecast.
+- **Change Point Summary Cards** with μ/σ changes before & after.
 
 ---
 
-## 🔍 How to Run
+## 🌐 Live Demo (if hosted)
+> Not hosted publicly. Run locally using the setup instructions below.
 
-### 1. Install dependencies:
+---
 
+## 🧠 Tech Stack
+
+| Layer         | Tools Used                         |
+|---------------|-------------------------------------|
+| Data Analysis | Python, Pandas, PyMC, ArviZ         |
+| API Server    | Flask, Flask-CORS                   |
+| Frontend UI   | React, Chart.js, Recharts, CSS      |
+| Visualization | Chart.js with annotations, tooltips |
+| State Mgmt    | React Hooks (`useState`, `useEffect`) |
+
+---
+
+## 🛠 Setup Instructions
+
+### 1. Clone and install Python backend
 ```bash
+git clone https://github.com/your-username/brent-oil-price-analysis.git
+cd brent-oil-price-analysis/dashboard
+python -m venv .venv
+source .venv/bin/activate  # Or .venv\Scripts\activate on Windows
 pip install -r requirements.txt
-```
+2. Run Flask backend
+bash
+Copy
+Edit
+cd dashboard
+python app.py
+3. Install and run React frontend
+bash
+Copy
+Edit
+cd frontend
+npm install
+npm start
+The app will be available at: http://localhost:3000
 
-### 2. Run Jupyter notebooks:
+📂 Datasets
+BrentOilPrices.csv: Historical daily prices from 2000 onward.
 
-```bash
-jupyter notebook notebooks/EDA.ipynb
-jupyter notebook notebooks/modeling.ipynb
-```
+key_events.csv: Manually curated global events with timestamps.
 
-## 📊 Example Insights
+volatility.csv: Rolling standard deviation for each date.
 
-* Model detected a changepoint in March 2020 aligned with COVID-19 lockdowns.
-* Post-change: mean returns dropped, volatility doubled.
-* Likely market regime shift due to global demand collapse.
+bayesian_trace.nc: PyMC-generated posterior samples.
 
+📊 Sample UI Screenshots
+Price Trend + Events	Forecast Toggle	Change Point Summary
 
----
+📈 Future Directions
+Feature	Description
+📅 Multi-Change Point	Display and compare several change points.
+🧠 Bayesian Forecast	Extend forecasting using posterior sampling.
+🔍 Event Filtering	Filter events by category or severity.
+🧾 Export Reports	Export event impact summaries to PDF/CSV.
 
-## 📄 License
+🤝 Contributing
+Pull requests are welcome. For major changes, open an issue first to discuss what you would like to change.
 
-MIT License — free for reuse with attribution.
+📄 License
+MIT
 
----
+👨‍💻 Author
+Filimon Hailemariam · AI Intern @ 10 Academy · LinkedIn · GitHub
 
-## 🔗 References
-
-* PyMC documentation: [https://www.pymc.io](https://www.pymc.io)
-* ADF Test (statsmodels): [https://www.statsmodels.org](https://www.statsmodels.org)
-* Oil Market Timeline: [https://en.wikipedia.org/wiki/Oil\_crisis](https://en.wikipedia.org/wiki/Oil_crisis)
