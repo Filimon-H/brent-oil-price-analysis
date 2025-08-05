@@ -180,3 +180,106 @@ def price_change_impact():
             continue
 
     return jsonify(results)
+
+from sklearn.linear_model import LinearRegression
+import numpy as np
+
+@changepoint_bp.route("/events/forecast")
+def forecast_trend():
+    df = pd.read_csv(os.path.join(BASE_DIR, "data", "BrentOilPrices.csv"))
+    df["Date"] = pd.to_datetime(df["Date"])
+    df = df[df["Date"] >= "2000-01-01"]
+    df = df.sort_values("Date")
+
+    # Convert dates to ordinal for regression
+    df["Ordinal"] = df["Date"].map(pd.Timestamp.toordinal)
+    X = df["Ordinal"].values.reshape(-1, 1)
+    y = df["Price"].values
+
+    model = LinearRegression().fit(X, y)
+    future_days = 180
+    last_date = df["Date"].max()
+    future_dates = pd.date_range(start=last_date, periods=future_days, freq="D")[1:]
+
+    future_ordinals = np.array([d.toordinal() for d in future_dates]).reshape(-1, 1)
+    forecast = model.predict(future_ordinals)
+
+    return jsonify({
+        "forecast_dates": [d.strftime("%Y-%m-%d") for d in future_dates],
+        "forecast_prices": forecast.round(2).tolist()
+    })
+
+
+import arviz as az
+import numpy as np
+
+@changepoint_bp.route("/events/bayesian_forecast")
+def bayesian_forecast():
+    trace = az.from_netcdf(os.path.join(BASE_DIR, "results", "metrics", "bayesian_trace.nc"))
+
+    # Assume the variable is called 'y_forecast' – adjust based on your model
+    if "posterior_predictive" in trace.groups():
+        forecast = trace.posterior_predictive["y_forecast"].values  # shape: (chains, draws, time)
+    else:
+        return jsonify({"error": "No forecast data found"}), 400
+
+    # Mean + 95% CI across chains & draws
+    mean = forecast.mean(axis=(0, 1))
+    lower = np.percentile(forecast, 2.5, axis=(0, 1))
+    upper = np.percentile(forecast, 97.5, axis=(0, 1))
+
+    # Dummy dates – you should align with the actual forecasted date range
+    forecast_dates = pd.date_range(start="2023-01-01", periods=len(mean)).strftime("%Y-%m-%d").tolist()
+
+    return jsonify({
+        "dates": forecast_dates,
+        "mean": mean.tolist(),
+        "lower": lower.tolist(),
+        "upper": upper.tolist(),
+    })
+
+
+@changepoint_bp.route("/events/forecast")
+def forecast():
+    method = request.args.get("method", "linear")
+
+    df = pd.read_csv(os.path.join(BASE_DIR, "data", "BrentOilPrices.csv"))
+    df["Date"] = pd.to_datetime(df["Date"])
+    df.sort_values("Date", inplace=True)
+
+    if method == "linear":
+        # Linear forecast using polyfit
+        df["Days"] = (df["Date"] - df["Date"].min()).dt.days
+        coef = np.polyfit(df["Days"], df["Price"], deg=1)
+        future_days = np.arange(df["Days"].max() + 1, df["Days"].max() + 31)
+        future_dates = [df["Date"].max() + pd.Timedelta(days=int(i)) for i in range(1, 31)]
+        forecast_prices = np.polyval(coef, future_days)
+
+        return jsonify({
+            "dates": [d.strftime("%Y-%m-%d") for d in future_dates],
+            "prices": forecast_prices.round(2).tolist(),
+            "method": "linear"
+        })
+
+    elif method == "bayesian":
+        trace_path = os.path.join(BASE_DIR, "results", "metrics", "bayesian_trace.nc")
+        if not os.path.exists(trace_path):
+            return jsonify({"error": "Bayesian trace file not found"}), 404
+
+        trace = az.from_netcdf(trace_path)
+        intercept = trace.posterior["intercept"].mean().values
+        slope = trace.posterior["slope"].mean().values
+
+        df["Days"] = (df["Date"] - df["Date"].min()).dt.days
+        future_days = np.arange(df["Days"].max() + 1, df["Days"].max() + 31)
+        future_dates = [df["Date"].max() + pd.Timedelta(days=int(i)) for i in range(1, 31)]
+        forecast_prices = intercept + slope * future_days
+
+        return jsonify({
+            "dates": [d.strftime("%Y-%m-%d") for d in future_dates],
+            "prices": forecast_prices.round(2).tolist(),
+            "method": "bayesian"
+        })
+
+    else:
+        return jsonify({"error": "Invalid method"}), 400

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Line } from "react-chartjs-2";
-import { fetchPriceTrend } from "../api/client";
+import { fetchPriceTrend, fetchForecast } from "../api/client";
 import {
   Chart as ChartJS,
   LineElement,
@@ -12,7 +12,7 @@ import {
 } from "chart.js";
 import annotationPlugin from "chartjs-plugin-annotation";
 
-// 📌 Register chart elements and plugin
+// Register chart elements
 ChartJS.register(
   LineElement,
   CategoryScale,
@@ -30,10 +30,15 @@ const HistoricalChart = () => {
   const [showEvents, setShowEvents] = useState(true);
 
   const fetchData = () => {
-    fetchPriceTrend(startDate, endDate, showEvents)
-      .then((res) => {
-        const { dates, prices, events = [] } = res.data;
+    Promise.all([
+      fetchPriceTrend(startDate, endDate, showEvents),
+      fetchForecast(),
+    ])
+      .then(([trendRes, forecastRes]) => {
+        const { dates, prices, events = [] } = trendRes.data;
+        const { forecast_dates, forecast_prices } = forecastRes.data;
 
+        // 📈 Main price trend line
         const mainDataset = {
           label: "Brent Oil Price",
           data: prices,
@@ -43,7 +48,17 @@ const HistoricalChart = () => {
           pointRadius: 1,
         };
 
-        // 🔴 Red lines for visual annotation
+        // 🔮 Forecasted trendline
+        const forecastDataset = {
+          label: "🔮 Forecast",
+          data: [...Array(dates.length).fill(null), ...forecast_prices],
+          borderDash: [5, 5],
+          borderColor: "#00cc99",
+          pointRadius: 0,
+          tension: 0.1,
+        };
+
+        // 📍 Event markers + annotations
         const annotations = {};
         const eventPoints = [];
 
@@ -58,7 +73,6 @@ const HistoricalChart = () => {
               label: { enabled: false },
             };
 
-            // ⛳ Invisible points for tooltip
             eventPoints.push({
               x: e.date,
               y: e.y !== null ? e.y : null,
@@ -67,7 +81,7 @@ const HistoricalChart = () => {
           });
         }
 
-        // ➕ Dataset for tooltip interaction
+        // ⛳ Interactive event points for tooltip
         const eventDataset = {
           label: "Event",
           data: eventPoints,
@@ -83,9 +97,15 @@ const HistoricalChart = () => {
           pointHitRadius: 20,
         };
 
+        // Merge datasets
+        const fullDates = [...dates, ...forecast_dates];
         const data = {
-          labels: dates,
-          datasets: [mainDataset, ...(showEvents ? [eventDataset] : [])],
+          labels: fullDates,
+          datasets: [
+            mainDataset,
+            ...(showEvents ? [eventDataset] : []),
+            forecastDataset,
+          ],
         };
 
         const options = {
@@ -114,7 +134,7 @@ const HistoricalChart = () => {
         setChartData({ data, options });
       })
       .catch((err) => {
-        console.error("Error fetching price trend:", err);
+        console.error("Error fetching data:", err);
       });
   };
 

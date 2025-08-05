@@ -43,3 +43,6 @@ export const fetchVolatility = () => api.get("/events/volatility");
 
 // 🔄 API for average price change around events
 export const fetchEventImpacts = () => api.get("/events/price_change_impact");
+
+export const fetchForecast = () => api.get("/events/forecast");
+export const fetchBayesianForecast = () => api.get("/events/bayesian_forecast");
