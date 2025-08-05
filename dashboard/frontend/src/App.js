@@ -1,14 +1,8 @@
-
-
-
-
 import React, { useEffect, useState } from "react";
 import { fetchSummary } from "./api/client";
 import SummaryCard from "./components/SummaryCard";
-import HistoricalChart from "./components/HistoricalChart"; // ✅ NEW
+import HistoricalChart from "./components/HistoricalChart";
 import VolatilityChart from "./components/VolatilityChart";
-
-
 
 function App() {
   const [summary, setSummary] = useState(null);
@@ -24,10 +18,14 @@ function App() {
       <h1 style={{ textAlign: "center", paddingTop: "20px" }}>
         🛢 Brent Oil Change Point Dashboard
       </h1>
+
+      {/* Summary card */}
       {summary ? <SummaryCard summary={summary} /> : <p>Loading summary...</p>}
 
-      {/* ✅ Render Historical Chart */}
+      {/* Date-range-filterable historical price chart */}
       <HistoricalChart />
+
+      {/* Volatility visualization */}
       <VolatilityChart />
     </div>
   );

@@ -4,6 +4,7 @@ import pandas as pd
 from pathlib import Path
 import numpy as np
 import os
+from flask import request
 
 
 # 🔧 Define BASE_DIR as the root of your project
@@ -54,8 +55,8 @@ def get_events():
     return jsonify(events_df.to_dict(orient="records"))
 
 
-@changepoint_bp.route("/events/price_trend")
-def price_trend():
+#@changepoint_bp.route("/events/price_trend")
+#def price_trend():
     df = pd.read_csv(os.path.join(BASE_DIR, "data", "BrentOilPrices.csv"))
     df['Date'] = pd.to_datetime(df['Date'])
     df = df[df['Date'] >= '2000-01-01']  # Optional filter
@@ -78,3 +79,63 @@ def volatility():
         "dates": df["Date"].dt.strftime('%Y-%m-%d').tolist(),
         "volatility": df["Volatility"].round(5).tolist()
     })
+
+
+#@changepoint_bp.route("/events/price_trend")
+#def price_trend():
+    df = pd.read_csv(os.path.join(BASE_DIR, "data", "BrentOilPrices.csv"))
+    df['Date'] = pd.to_datetime(df['Date'])
+
+    # 🔁 Optional query filters
+    start = request.args.get("start_date")
+    end = request.args.get("end_date")
+
+    if start:
+        df = df[df['Date'] >= pd.to_datetime(start)]
+    if end:
+        df = df[df['Date'] <= pd.to_datetime(end)]
+
+    return jsonify({
+        "dates": df['Date'].dt.strftime('%Y-%m-%d').tolist(),
+        "prices": df['Price'].round(2).tolist()
+    })
+
+
+@changepoint_bp.route("/events/price_trend")
+def price_trend():
+    start_date = request.args.get("start_date", "2000-01-01")
+    end_date = request.args.get("end_date", "2022-12-31")
+    include_events = request.args.get("include_events", "false").lower() == "true"
+
+    df = pd.read_csv(os.path.join(BASE_DIR, "data", "BrentOilPrices.csv"))
+    df["Date"] = pd.to_datetime(df["Date"])
+    df = df[(df["Date"] >= start_date) & (df["Date"] <= end_date)]
+
+    response = {
+        "dates": df["Date"].dt.strftime("%Y-%m-%d").tolist(),
+        "prices": df["Price"].round(2).tolist(),
+    }
+
+    if include_events:
+        events_df = pd.read_csv(os.path.join(BASE_DIR, "data", "key_events.csv"))
+        events_df["start"] = pd.to_datetime(events_df["start"])
+        filtered_events = events_df[
+            (events_df["start"] >= start_date) & (events_df["start"] <= end_date)
+        ]
+
+        # 🔁 Map event dates to price values
+        price_lookup = df.set_index("Date")["Price"]
+
+        response["events"] = []
+        for _, row in filtered_events.iterrows():
+            event_date = row["start"]
+            price_on_event = price_lookup.get(event_date, None)
+            if pd.notna(price_on_event):
+                response["events"].append({
+                    "date": event_date.strftime("%Y-%m-%d"),
+                    "label": row["event"][:25],  # Optional: show more characters
+                    "y": round(price_on_event, 2),
+                    "category": row.get("category", "")
+                })
+
+    return jsonify(response)
